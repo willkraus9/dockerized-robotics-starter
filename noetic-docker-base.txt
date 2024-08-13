@@ -1,0 +1,44 @@
+#====================SETUP====================
+FROM ubuntu:20.04
+
+# getting sudo commands to work in docker
+RUN apt-get update && apt-get install -y sudo curl
+
+# if this doesn't work, try this:
+#RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
+#USER docker
+
+# get into files using for install
+WORKDIR /usr/src
+
+#====================ROS+NOETIC+INSTALL====================
+RUN sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+RUN sudo apt update
+RUN sudo apt install ros-noetic-desktop-full
+
+# bash setup script for running ROS in every shell
+RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+source ~/.bashrc
+
+# more dependencies
+sudo apt install python3-rosdep python3-rosinstall python3-rosinstall-generator python3-wstool build-essential
+sudo apt install python3-rosdep
+sudo rosdep init
+rosdep update
+
+#====================REQUIREMENTS+ADDITIONS====================
+
+COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
+
+CMD ["python","./app.py"]
+
+- RUN sudo curl -o /usr/local/bin/myapp https://example.com/myapp && \
+-     sudo chmod +x /usr/local/bin/myapp
++ RUN curl -o /tmp/myapp https://example.com/myapp && \
++     chmod +x /tmp/myapp && \
++     mv /tmp/myapp /usr/local/bin/
+
+CMD ["/usr/local/bin/myapp"]
+
